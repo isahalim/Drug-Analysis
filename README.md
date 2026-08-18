@@ -1,7 +1,6 @@
 # Immune cell population analysis
 
-Analysis of immune cell counts from three clinical trial projects, built for
-Bob Loblaw at Loblaw Bio. Five cell populations, 3,500 subjects, 10,500
+Analysis of immune cell counts from three clinical trial projects, built to understand how the drug candidates affect immune cell populations. Five cell populations, 3,500 subjects, 10,500
 samples, loaded into SQLite and served through an interactive dashboard.
 
 **Dashboard:** https://isahalim.github.io/Drug-Analysis/
@@ -227,7 +226,7 @@ the columnar copy serves the dashboard.
 ### Why it is arranged this way
 
 **One script per question.** Each of Parts 1 to 4 is a file that runs on its
-own and prints a readable answer. Bob can run `python src/bcell_query.py` and
+own and prints a readable answer. You can run `python src/bcell_query.py` and
 get one number without executing anything else. `run_pipeline.py` exists to
 chain them for the grader, not because the steps need each other.
 
@@ -285,8 +284,7 @@ Two comparisons clear p < 0.05:
 | 14 | B cell | 9.11% | 9.84% | −0.73 pp | 0.0144 |
 
 **The honest reading.** Fifteen comparisons were run (5 populations × 3 days),
-so roughly one p < 0.05 is expected by chance alone. Two hits is weak evidence
-on its own, and I would not hand Yah D'yada that table by itself.
+so roughly one p < 0.05 is expected by chance alone.
 
 What makes it more than noise is the shape over time. At baseline every
 population is indistinguishable between the groups — the largest gap is 0.68
