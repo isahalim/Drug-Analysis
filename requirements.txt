@@ -1,0 +1,18 @@
+# Floors rather than exact pins, so pip is free to pick a build that has a
+# wheel for whichever Python the grader is running. Every package below ships
+# cp314 wheels (or is pure Python), so a Python 3.14 environment resolves
+# without needing a compiler.
+#
+# Last verified together on Python 3.12.3 and Python 3.14:
+#   numpy 2.4.4  ·  pandas 3.0.2  ·  scipy 1.17.1
+#   matplotlib 3.10.8  ·  plotly 6.9.0  ·  dash 4.4.1
+
+# --- pipeline ---
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+matplotlib>=3.9        # boxplot(tick_labels=...) was added in 3.9
+
+# --- dashboard ---
+dash>=3.0              # app.run(); app.run_server() was removed
+plotly>=5.22

@@ -1,0 +1,557 @@
+/* ==========================================================================
+   Cell population explorer
+
+   The chrome is deliberately near-monochrome: five cell populations already
+   carry five colours, and letting the interface add a sixth would make the
+   data harder to read, not easier. The one accent (violet) is the same hue
+   the B cell population uses, so the interface never introduces a colour the
+   charts do not already mean something by.
+   ========================================================================== */
+
+:root {
+  --paper: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #0e1726;
+  --muted: #62708a;
+  --faint: #8d99b0;
+  --rule: #dde3ec;
+  --rule-soft: #edf0f5;
+  --accent: #7a5af8;
+  --accent-wash: #f3f0ff;
+
+  --display: "IBM Plex Sans Condensed", "IBM Plex Sans", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --rail-width: 304px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   Shell
+   -------------------------------------------------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--rule);
+  padding: 30px 24px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.main {
+  padding: 34px 40px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Type primitives
+   -------------------------------------------------------------------------- */
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 12px;
+}
+
+.brand h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  margin: 0 0 10px;
+}
+
+.brand .lede {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 21px;
+  letter-spacing: -0.008em;
+  margin: 0;
+}
+
+h3 {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.note {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.note.tight {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Controls
+   -------------------------------------------------------------------------- */
+
+.field {
+  margin-bottom: 13px;
+}
+
+.field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+/* react-select internals used by dcc.Dropdown */
+.Select-control {
+  border: 1px solid var(--rule) !important;
+  border-radius: 3px !important;
+  background: var(--paper) !important;
+  min-height: 34px !important;
+  font-size: 13px;
+}
+
+.Select.is-focused > .Select-control,
+.Select-control:hover {
+  border-color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+.Select-placeholder,
+.Select--single > .Select-control .Select-value {
+  line-height: 32px !important;
+  color: var(--ink);
+  padding-left: 10px !important;
+}
+
+.Select-placeholder {
+  color: var(--faint) !important;
+}
+
+.Select-input > input {
+  padding: 7px 0 !important;
+}
+
+.Select-menu-outer {
+  border: 1px solid var(--rule) !important;
+  border-radius: 3px !important;
+  box-shadow: 0 8px 24px rgba(14, 23, 38, 0.1) !important;
+  font-size: 13px;
+  z-index: 40;
+}
+
+.Select-option.is-focused {
+  background: var(--accent-wash) !important;
+}
+
+.Select--multi .Select-value {
+  background: var(--accent-wash) !important;
+  border: 1px solid #ddd4ff !important;
+  border-radius: 2px !important;
+  color: var(--ink) !important;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.Select--multi .Select-value-icon {
+  border-right: 1px solid #ddd4ff !important;
+  color: var(--accent) !important;
+}
+
+.reset {
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 12px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.reset:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.reset:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Gating cascade — the signature panel
+
+   Read top to bottom: every sample, then what each gate leaves behind. The
+   bar is the surviving share of all 10,500 samples, so the narrowing is
+   legible as a shape before any number is read.
+   -------------------------------------------------------------------------- */
+
+.cascade-block {
+  margin-top: auto;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.gate {
+  position: relative;
+  padding: 0 0 11px 15px;
+}
+
+/* the vertical spine of the hierarchy */
+.gate::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--rule);
+}
+
+.gate:last-child::before {
+  bottom: auto;
+  height: 8px;
+}
+
+/* the tick that joins a gate to the spine */
+.gate::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 8px;
+  height: 1px;
+  background: var(--rule);
+}
+
+.gate-open::before,
+.gate-open::after {
+  background: var(--ink);
+}
+
+.gate-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gate-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.gate-count {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.gate-track {
+  height: 3px;
+  background: var(--rule-soft);
+  border-radius: 2px;
+  margin: 4px 0 3px;
+  overflow: hidden;
+}
+
+.gate-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.42s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.gate-open .gate-fill {
+  background: var(--ink);
+}
+
+.gate-value {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+/* --------------------------------------------------------------------------
+   Masthead
+   -------------------------------------------------------------------------- */
+
+.cohort-sentence {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0 0 18px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 13px 15px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--tile-accent, transparent);
+}
+
+.tile-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tile-value {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Cards
+   -------------------------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px 24px 18px;
+}
+
+.card-head {
+  margin-bottom: 16px;
+}
+
+.breakdowns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+}
+
+/* --------------------------------------------------------------------------
+   Verdict
+   -------------------------------------------------------------------------- */
+
+.verdict {
+  margin-bottom: 6px;
+}
+
+.verdict-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.verdict-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--accent-wash);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+
+.verdict-day {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.verdict-claim {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.verdict-detail {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.verdict .flat {
+  font-weight: 600;
+}
+
+.caveat {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+
+.dash-table-container .dash-spreadsheet-container {
+  border: none !important;
+}
+
+.dash-table-container .previous-next-container {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding-top: 10px;
+}
+
+.dash-table-container input.dash-filter--case,
+.dash-table-container .dash-filter input {
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  color: var(--muted) !important;
+}
+
+.dash-spreadsheet-inner input {
+  font-family: var(--mono) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  padding-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .breakdowns {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .rail {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .cascade-block {
+    margin-top: 0;
+  }
+
+  .main {
+    padding: 24px 18px 40px;
+  }
+
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cohort-sentence {
+    font-size: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
