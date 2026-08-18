@@ -33,32 +33,9 @@ root, and it is:
 python load_data.py       # writes cell_counts.db to the repository root
 ```
 
-It uses only `csv` and `sqlite3` from the standard library, so it needs no
+It uses `csv` and `sqlite3` from the standard library, so it needs no
 `pip install` at all and runs on any Python 3.10 or newer. No arguments, no
 `python -m`.
-
-### Why the dependency problem cannot come back
-
-The usual failure here is `pip install pandas` landing in one interpreter while
-the script runs under another, which shows up later as `ModuleNotFoundError:
-No module named 'matplotlib'`. Three things prevent it:
-
-1. `make setup` creates `.venv`, and every target invokes `.venv/bin/python`
-   by absolute path. The interpreter that receives the packages is the one
-   that runs the code.
-2. `make pipeline` depends on the setup stamp, so a fresh checkout installs
-   before it runs rather than failing partway through.
-3. Step 0 of the pipeline imports all six packages up front and prints the
-   interpreter path and every version. If something is missing, the error
-   names the exact `pip` command for *that* interpreter instead of surfacing
-   three steps later.
-
-`requirements.txt` uses version floors rather than exact pins, so pip is free
-to choose a build with a wheel for whichever Python is present. All four
-scientific packages publish `cp314` wheels and Dash and Plotly are pure
-Python, so a Python 3.14 environment resolves without a compiler. Verified
-against numpy 2.5.2, pandas 3.0.5, scipy 1.18.0, matplotlib 3.11.1,
-plotly 6.9.0 and dash 4.4.1.
 
 ### Other targets
 
